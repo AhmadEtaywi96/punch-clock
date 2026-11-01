@@ -1,43 +1,116 @@
+<div class="aurora" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+</div>
+
 <main class="app">
-  <header>
-    <h1>Punch Clock</h1>
-    <div class="clock">{{ now() | date: 'HH:mm:ss' }}</div>
-    <div class="date">{{ now() | date: 'EEEE, d MMM y' }}</div>
+  <header class="hero">
+    <p class="greeting">{{ greeting() }}, Ahmad</p>
+    <div class="clock">
+      {{ now() | date: 'HH:mm' }}<span class="sec">{{ now() | date: ':ss' }}</span>
+    </div>
+    <p class="date">{{ now() | date: 'EEEE, d MMMM' }}</p>
+
+    @if (hasPin() && lastPunch(); as last) {
+      <div class="last-pill {{ last.action === 'Logout' ? 'out' : last.action === 'Login' ? 'in' : 'door' }}">
+        <span class="dot"></span>
+        Last: {{ last.action }} · {{ last.time }}
+      </div>
+    }
   </header>
 
   @if (!hasPin()) {
-    <form class="pin-form" (ngSubmit)="savePin()">
-      <label for="pin">Enter your PIN</label>
+    <form class="glass pin-card" (ngSubmit)="savePin()">
+      <div class="lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2.5" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+      </div>
+      <h2>Unlock Punch Clock</h2>
+      <p class="muted">Enter your PIN to continue</p>
       <input
         id="pin"
         name="pin"
         type="password"
         inputmode="numeric"
         autocomplete="current-password"
+        aria-label="PIN"
         [ngModel]="pinInput()"
         (ngModelChange)="pinInput.set($event)"
         placeholder="••••"
         required
       />
-      <button type="submit" class="btn save" [disabled]="busy() || !pinInput().trim()">
-        {{ busy() === 'pin' ? 'Checking…' : 'Save PIN' }}
+      <button type="submit" class="primary" [disabled]="busy() || !pinInput().trim()">
+        @if (busy() === 'pin') {
+          <span class="spinner"></span> Checking…
+        } @else {
+          Unlock
+        }
       </button>
     </form>
   } @else {
-    <section class="actions">
+    <section class="grid">
       @for (a of actions; track a.action) {
-        <button type="button" class="btn {{ a.css }}" [disabled]="busy()" (click)="log(a.action)">
-          {{ busy() === a.action ? 'Sending…' : a.label }}
+        <button
+          type="button"
+          class="glass card {{ a.css }}"
+          [class.sending]="busy() === a.action"
+          [disabled]="busy()"
+          (click)="log(a.action)"
+        >
+          <span class="icon">
+            @if (busy() === a.action) {
+              <span class="spinner"></span>
+            } @else {
+              @switch (a.action) {
+                @case ('Login') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <path d="M10 17l5-5-5-5" />
+                    <path d="M15 12H3" />
+                  </svg>
+                }
+                @case ('Logout') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <path d="M16 17l5-5-5-5" />
+                    <path d="M21 12H9" />
+                  </svg>
+                }
+                @default {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 21h16" />
+                    <path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17" />
+                    <circle cx="14.5" cy="12" r="1" fill="currentColor" />
+                  </svg>
+                }
+              }
+            }
+          </span>
+          <span class="text">
+            <span class="label">{{ a.label }}</span>
+            <span class="hint">{{ busy() === a.action ? 'Sending…' : a.hint }}</span>
+          </span>
         </button>
       }
     </section>
+
+    <button type="button" class="link" (click)="changePin()">Change PIN</button>
   }
 
   @if (status(); as s) {
-    <p class="status {{ s.kind }}" role="status">{{ s.text }}</p>
-  }
-
-  @if (hasPin()) {
-    <button type="button" class="link" (click)="changePin()">Change PIN</button>
+    <div class="toast {{ s.kind }}" role="status" (click)="dismissStatus()">
+      <span class="toast-icon">
+        @switch (s.kind) {
+          @case ('info') { <span class="spinner sm"></span> }
+          @case ('success') { ✓ }
+          @case ('warning') { ! }
+          @default { ✕ }
+        }
+      </span>
+      <span>{{ s.text }}</span>
+    </div>
   }
 </main>
