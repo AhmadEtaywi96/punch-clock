@@ -1,0 +1,43 @@
+<main class="app">
+  <header>
+    <h1>Punch Clock</h1>
+    <div class="clock">{{ now() | date: 'HH:mm:ss' }}</div>
+    <div class="date">{{ now() | date: 'EEEE, d MMM y' }}</div>
+  </header>
+
+  @if (!hasPin()) {
+    <form class="pin-form" (ngSubmit)="savePin()">
+      <label for="pin">Enter your PIN</label>
+      <input
+        id="pin"
+        name="pin"
+        type="password"
+        inputmode="numeric"
+        autocomplete="current-password"
+        [ngModel]="pinInput()"
+        (ngModelChange)="pinInput.set($event)"
+        placeholder="••••"
+        required
+      />
+      <button type="submit" class="btn save" [disabled]="busy() || !pinInput().trim()">
+        {{ busy() === 'pin' ? 'Checking…' : 'Save PIN' }}
+      </button>
+    </form>
+  } @else {
+    <section class="actions">
+      @for (a of actions; track a.action) {
+        <button type="button" class="btn {{ a.css }}" [disabled]="busy()" (click)="log(a.action)">
+          {{ busy() === a.action ? 'Sending…' : a.label }}
+        </button>
+      }
+    </section>
+  }
+
+  @if (status(); as s) {
+    <p class="status {{ s.kind }}" role="status">{{ s.text }}</p>
+  }
+
+  @if (hasPin()) {
+    <button type="button" class="link" (click)="changePin()">Change PIN</button>
+  }
+</main>
